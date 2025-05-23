@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { CheckCircleIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { getBookingById, Booking } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const BookingConfirmationPage = () => {
   const { id } = useParams<{ id: string }>();

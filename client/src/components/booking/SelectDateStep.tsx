@@ -26,9 +26,19 @@ const SelectDateStep = ({
 }: SelectDateStepProps) => {
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [error, setError] = useState('');
+  
+  // Use local state for the selected time slot
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  
+  // Initialize selectedTimeSlot from localStorage if available
+  useEffect(() => {
+    const savedTimeSlot = localStorage.getItem('selectedTimeSlot');
+    if (savedTimeSlot) {
+      setSelectedTimeSlot(savedTimeSlot);
+    }
+  }, []);
 
   // Generate available dates (next 14 days, excluding Sundays)
   useEffect(() => {
@@ -58,10 +68,10 @@ const SelectDateStep = ({
         '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'
       ];
       setAvailableTimeSlots(slots);
-      setSelectedTimeSlot(null);
+      // Reset the time slot when date changes
+      localStorage.removeItem('selectedTimeSlot');
     } else {
       setAvailableTimeSlots([]);
-      setSelectedTimeSlot(null);
     }
   }, [selectedDate]);
 
@@ -71,33 +81,110 @@ const SelectDateStep = ({
   };
 
   const handleTimeSelect = (time: string) => {
+    // Store the selected time in localStorage for persistence
+    localStorage.setItem('selectedTimeSlot', time);
+    // Update our local state
     setSelectedTimeSlot(time);
     
     // Update the full date with the selected time
     if (selectedDate) {
-      const [hours, minutes] = time.match(/(\d+):(\d+)/)?.slice(1, 3) || [];
-      const isPM = time.includes('PM');
-      
-      const newDate = new Date(selectedDate);
-      newDate.setHours(
-        isPM && hours !== '12' ? parseInt(hours) + 12 : parseInt(hours),
-        parseInt(minutes),
-        0,
-        0
-      );
-      
-      onDateChange(newDate);
-      setError('');
+      try {
+        // Extract hours and minutes from the time string
+        const timeRegex = /(\d+):(\d+)\s*(AM|PM)/i;
+        const match = time.match(timeRegex);
+        
+        if (match) {
+          // Destructure the match array, ignoring the first element (full match)
+          const [, hoursStr, minutesStr, period] = match;
+          let hours = parseInt(hoursStr, 10);
+          const minutes = parseInt(minutesStr, 10);
+          
+          // Convert to 24-hour format if PM
+          if (period.toUpperCase() === 'PM' && hours !== 12) {
+            hours += 12;
+          } else if (period.toUpperCase() === 'AM' && hours === 12) {
+            // 12 AM should be 0 hours in 24-hour format
+            hours = 0;
+          }
+          
+          const newDate = new Date(selectedDate);
+          newDate.setHours(hours, minutes, 0, 0);
+          
+          // Update the parent component with the new date that includes time
+          onDateChange(newDate);
+          setError('');
+          console.log(`Selected time: ${time}, Date set to: ${newDate.toLocaleString()}`);
+        } else {
+          console.error(`Failed to parse time: ${time}`);
+        }
+      } catch (error) {
+        console.error('Error parsing time:', error);
+      }
     }
   };
 
+  // Debug function to log the current state
+  const logSelectionState = () => {
+    console.log('Current selection state:');
+    console.log('- selectedDate:', selectedDate ? selectedDate.toLocaleString() : 'null');
+    console.log('- selectedTimeSlot:', selectedTimeSlot);
+    console.log('- Has hours/minutes:', selectedDate ? 
+      `${selectedDate.getHours()}:${selectedDate.getMinutes()}` : 'N/A');
+  };
+
   const handleContinue = () => {
-    if (!selectedDate || !selectedTimeSlot) {
-      setError('Please select both a date and time');
+    // Log the current state for debugging
+    logSelectionState();
+    
+    // Validate that both date and time are selected
+    if (!selectedDate) {
+      console.error('No date selected');
+      setError('Please select a date');
       return;
     }
     
-    onNext();
+    if (!selectedTimeSlot) {
+      console.error('No time slot selected');
+      setError('Please select a time');
+      return;
+    }
+    
+    // Make sure we have the correct date with time before continuing
+    try {
+      // Extract hours and minutes from the time string again to ensure consistency
+      const timeRegex = /(\d+):(\d+)\s*(AM|PM)/i;
+      const match = selectedTimeSlot.match(timeRegex);
+      
+      if (match) {
+        const [, hoursStr, minutesStr, period] = match;
+        let hours = parseInt(hoursStr, 10);
+        const minutes = parseInt(minutesStr, 10);
+        
+        // Convert to 24-hour format if PM
+        if (period.toUpperCase() === 'PM' && hours !== 12) {
+          hours += 12;
+        } else if (period.toUpperCase() === 'AM' && hours === 12) {
+          // 12 AM should be 0 hours in 24-hour format
+          hours = 0;
+        }
+        
+        const finalDate = new Date(selectedDate);
+        finalDate.setHours(hours, minutes, 0, 0);
+        
+        // Make sure we update the parent component with the final date and time
+        onDateChange(finalDate);
+        console.log(`Final date and time set: ${finalDate.toLocaleString()}`);
+        
+        // Continue to next step
+        onNext();
+      } else {
+        console.error('Failed to parse time format:', selectedTimeSlot);
+        setError(`Invalid time format: ${selectedTimeSlot}`);
+      }
+    } catch (error) {
+      console.error('Error finalizing date/time:', error);
+      setError('Error processing your selection. Please try again.');
+    }
   };
 
   // Generate calendar days for current month view
@@ -250,44 +337,99 @@ const SelectDateStep = ({
 
         {/* Time slot selection */}
         {selectedDate && (
-          <div>
+          <div className="mt-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
               Available Times for {formatDate(selectedDate)}
             </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            
+            {/* Time slots as clickable divs */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {availableTimeSlots.map((time) => (
-                <div
+                <div 
                   key={time}
-                  className={`py-2 px-3 rounded-md border text-center cursor-pointer ${
-                    selectedTimeSlot === time
-                      ? 'border-primary bg-primary bg-opacity-5 text-primary'
-                      : 'border-gray-200 hover:border-primary text-gray-700'
-                  }`}
-                  onClick={() => handleTimeSelect(time)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`Clicked time: ${time}`);
+                    // Directly call handleTimeSelect which will update the parent component
+                    if (selectedDate) {
+                      handleTimeSelect(time);
+                    }
+                  }}
+                  className={`p-4 rounded-md border text-center cursor-pointer
+                    ${selectedTimeSlot === time 
+                      ? 'border-primary bg-primary bg-opacity-10 shadow-sm' 
+                      : 'border-gray-200 hover:border-primary hover:bg-gray-50'} 
+                    transition-all duration-200`}
                 >
-                  {time}
+                  <div className="flex flex-col items-center justify-center">
+                    <span className={`font-medium ${selectedTimeSlot === time ? 'text-primary' : 'text-gray-700'}`}>
+                      {time}
+                    </span>
+                    
+                    {selectedTimeSlot === time && (
+                      <span className="mt-2 bg-primary text-white text-xs font-bold py-1 px-2 rounded-full">
+                        Selected
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
+            
+            {selectedTimeSlot && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <p className="ml-2 text-sm font-medium text-green-800">
+                    You've selected: <span className="font-bold">{selectedTimeSlot}</span> on <span className="font-bold">{formatDate(selectedDate)}</span>
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <div className="flex justify-between">
+        <div className="flex justify-between mt-6">
           <button
             type="button"
-            onClick={onBack}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            onClick={() => onBack()}
+            className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             Back
           </button>
+          
           <button
             type="button"
-            onClick={handleContinue}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            onClick={() => {
+              if (selectedDate && selectedTimeSlot) {
+                console.log('Continue clicked with valid selections');
+                handleContinue();
+              } else {
+                console.error('Missing date or time selection');
+                setError('Please select both a date and time');
+                
+                // Scroll to error message if needed
+                setTimeout(() => {
+                  const errorElement = document.querySelector('.text-red-600');
+                  if (errorElement) {
+                    errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }, 100);
+              }
+            }}
+            disabled={!selectedDate || !selectedTimeSlot}
+            className={`px-4 py-2 border text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
+              selectedDate && selectedTimeSlot
+                ? 'border-transparent text-white bg-primary hover:bg-primary-dark'
+                : 'border-gray-300 text-gray-500 bg-gray-100 cursor-not-allowed'
+            }`}
           >
-            Continue
+            {selectedDate && selectedTimeSlot ? 'Continue' : 'Select Date & Time'}
           </button>
         </div>
       </div>

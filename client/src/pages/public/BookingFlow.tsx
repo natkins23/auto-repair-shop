@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation, useQuery } from 'react-query';
 import toast from 'react-hot-toast';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { getCars, createBooking, CreateBookingPayload, Car } from '../../services/api';
 import SelectCarStep from '../../components/booking/SelectCarStep';
 import DescribeIssueStep from '../../components/booking/DescribeIssueStep';
@@ -103,7 +103,7 @@ const BookingFlow = () => {
   };
 
   // Handle new car creation
-  const handleAddCar = async (_: any) => {
+  const handleAddCar = async () => {
     // This would normally call the API to create a car
     // For now, we'll just close the modal and refresh the cars list
     setIsAddCarModalOpen(false);

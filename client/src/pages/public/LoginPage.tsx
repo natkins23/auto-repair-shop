@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const LoginPage = () => {
-  const { currentUser, signInWithGoogle } = useAuth();
+  const { currentUser, signInWithGoogle, signInAsGuest } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -14,7 +16,31 @@ const LoginPage = () => {
   }, [currentUser, navigate]);
 
   const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
+    setIsLoading(true);
+    try {
+      const user = await signInWithGoogle();
+      if (user) {
+        // Explicitly navigate to the garage page after successful login
+        navigate('/garage');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setIsGuestLoading(true);
+    try {
+      await signInAsGuest();
+      // Navigate directly to the booking flow for guests
+      navigate('/booking');
+    } catch (error) {
+      console.error('Guest login error:', error);
+    } finally {
+      setIsGuestLoading(false);
+    }
   };
 
   return (
@@ -38,17 +64,40 @@ const LoginPage = () => {
           </p>
         </div>
         <div className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm space-y-4">
             <button
               onClick={handleGoogleSignIn}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              disabled={isLoading || isGuestLoading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                 <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
                 </svg>
               </span>
-              Sign in with Google
+              {isLoading ? 'Signing in...' : 'Sign in with Google'}
+            </button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-50 text-gray-500">Or continue as</span>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleGuestLogin}
+              disabled={isLoading || isGuestLoading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70"
+            >
+              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </span>
+              {isGuestLoading ? 'Loading...' : 'Continue as Guest'}
             </button>
           </div>
 
@@ -70,10 +119,10 @@ const LoginPage = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">Demo Mode Information</h3>
+                <h3 className="text-sm font-medium text-yellow-800">Guest Mode Information</h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
-                    This is a demo application. In a real environment, you would be redirected to Google's authentication service.
+                    In guest mode, your bookings will not be saved to your account. Sign in with Google to access all features.
                   </p>
                 </div>
               </div>

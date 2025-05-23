@@ -7,7 +7,7 @@ import {
   HomeIcon, 
   CalendarIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const AdminLayout = () => {
   const { currentUser, signOut } = useAuth();

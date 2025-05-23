@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { getCars, createCar, updateCar, deleteCar, Car, CreateCarPayload } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import AddCarModal from '../../components/cars/AddCarModal';
 import EditCarModal from '../../components/cars/EditCarModal';
 
