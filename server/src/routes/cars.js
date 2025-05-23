@@ -16,7 +16,14 @@ const carSchema = z.object({
  * GET /api/cars
  */
 router.get('/', async (req, res) => {
+  console.log('GET /api/cars - User ID:', req.user?.id);
+  
   try {
+    if (!req.user?.id) {
+      console.error('No user ID in request');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
     const cars = await req.prisma.car.findMany({
       where: {
         userId: req.user.id
@@ -26,10 +33,23 @@ router.get('/', async (req, res) => {
       }
     });
     
+    console.log(`Found ${cars.length} cars for user ${req.user.id}`);
     res.status(200).json(cars);
   } catch (error) {
     console.error('Error fetching cars:', error);
-    res.status(500).json({ error: 'Failed to fetch cars' });
+    
+    // Log more detailed error information
+    if (error.code) {
+      console.error('Database error code:', error.code);
+    }
+    if (error.meta) {
+      console.error('Database error meta:', error.meta);
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch cars',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

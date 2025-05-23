@@ -238,15 +238,35 @@ export const getCurrentUser = async (): Promise<User> => {
 export const getCars = async (): Promise<Car[]> => {
   try {
     if (useMockData) {
+      console.log('Using mock data for getCars');
       return mockCars;
     }
+    
+    console.log('Fetching cars from:', `${api.defaults.baseURL}/cars`);
+    console.log('Auth token:', api.defaults.headers.common['Authorization']);
+    
     const response = await api.get('/cars');
+    console.log('Get cars response:', response);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Get cars error:', error);
-    if (useMockData) {
+    
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    } else {
+      console.error('Error message:', error.message);
+    }
+    
+    // In development or if useMockData is true, return mock data
+    if (useMockData || process.env.NODE_ENV === 'development') {
+      console.warn('Falling back to mock data due to error');
       return mockCars;
     }
+    
     throw error;
   }
 };
