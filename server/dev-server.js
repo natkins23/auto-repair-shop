@@ -5,7 +5,14 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 const app = express();
-const PORT = process.env.PORT || 3001; // Use environment variable for production or default to 3001 for development
+// Parse the port as an integer to ensure it's a valid port number
+const PORT = parseInt(process.env.PORT, 10) || 3001;
+
+// Add error handling for invalid ports
+if (isNaN(PORT)) {
+  console.error('Invalid port specified in PORT environment variable:', process.env.PORT);
+  process.exit(1);
+}
 
 // Middleware
 app.use(cors({
@@ -734,8 +741,8 @@ app.get('/api/repair-history', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Development server running on port ${PORT}`);
-  console.log(`API available at http://localhost:${PORT}/api`);
+  console.log(`API available at http://0.0.0.0:${PORT}/api`);
   console.log('This is a simplified mock server for development purposes');
 });

@@ -14,7 +14,14 @@ const { authMiddleware } = require('./middleware/auth');
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
+// Parse the port as an integer to ensure it's a valid port number
+const PORT = parseInt(process.env.PORT, 10) || 3001;
+
+// Add error handling for invalid ports
+if (isNaN(PORT)) {
+  console.error('Invalid port specified in PORT environment variable:', process.env.PORT);
+  process.exit(1);
+}
 
 // Middleware
 app.use(cors({
@@ -53,8 +60,9 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`API available at http://0.0.0.0:${PORT}/api`);
 });
 
 // Handle graceful shutdown
