@@ -1,24 +1,50 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
   Bars3Icon, 
   XMarkIcon, 
   HomeIcon, 
-  CalendarIcon
+  TruckIcon,
+  ChartBarIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../hooks/useAuth';
+import toast from 'react-hot-toast';
+import { useTheme } from '../contexts/ThemeContext';
+
+interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  isAdmin: boolean;
+}
 
 const AdminLayout = () => {
-  const { currentUser, signOut } = useAuth();
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { darkMode } = useTheme();
+  
+  // Load admin user from localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser) as AdminUser;
+        setCurrentUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user from localStorage:', error);
+      }
+    }
+  }, []);
 
   // Navigation items
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
-    { name: 'Bookings', href: '/admin/bookings', icon: CalendarIcon },
+    { name: 'Vehicles', href: '/admin/vehicles', icon: TruckIcon },
+    { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
+    { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
   ];
 
   // Check if a nav item is active
@@ -27,13 +53,14 @@ const AdminLayout = () => {
   };
 
   // Handle sign out
-  const handleSignOut = async () => {
-    await signOut();
+  const handleSignOut = () => {
+    localStorage.removeItem('currentUser');
+    toast.success('Signed out successfully');
     navigate('/admin/login');
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
+    <div className={`h-screen flex overflow-hidden ${darkMode ? 'bg-gray-900 dark:text-white' : 'bg-gray-100'}`}>
       {/* Mobile sidebar */}
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog
@@ -195,11 +222,11 @@ const AdminLayout = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-col w-0 flex-1 overflow-hidden">
+      <div className={`flex flex-col w-0 flex-1 overflow-hidden ${darkMode ? 'bg-gray-900 text-white' : 'bg-white'}`}>
         <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3">
           <button
             type="button"
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            className={`-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'} focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary`}
             onClick={() => setSidebarOpen(true)}
           >
             <span className="sr-only">Open sidebar</span>
@@ -207,7 +234,7 @@ const AdminLayout = () => {
           </button>
         </div>
         <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none">
-          <div className="py-6">
+          <div className={`py-6 ${darkMode ? 'bg-gray-900 text-white' : ''}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               <Outlet />
             </div>

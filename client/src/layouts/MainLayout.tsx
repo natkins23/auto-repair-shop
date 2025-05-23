@@ -13,6 +13,8 @@ const MainLayout = () => {
     { name: 'Home', href: '/' },
     { name: 'Book a Repair', href: '/booking' },
     { name: 'My Garage', href: '/garage' },
+    { name: 'Repair History', href: '/repair-history' },
+    { name: 'Track Repair', href: '/repair-status' },
   ];
 
   // Check if a nav item is active
@@ -92,6 +94,18 @@ const MainLayout = () => {
                                 } block px-4 py-2 text-sm text-gray-700`}
                               >
                                 My Garage
+                              </Link>
+                            )}
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <Link
+                                to="/repair-history"
+                                className={`${
+                                  active ? 'bg-gray-100' : ''
+                                } block px-4 py-2 text-sm text-gray-700`}
+                              >
+                                Repair History
                               </Link>
                             )}
                           </Menu.Item>

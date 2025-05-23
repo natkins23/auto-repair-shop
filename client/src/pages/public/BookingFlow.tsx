@@ -7,16 +7,16 @@ import { getCars, createBooking, CreateBookingPayload, Car } from '../../service
 import SelectCarStep from '../../components/booking/SelectCarStep';
 import DescribeIssueStep from '../../components/booking/DescribeIssueStep';
 import SelectDateStep from '../../components/booking/SelectDateStep';
-import PaymentStep from '../../components/booking/PaymentStep';
 import ConfirmStep from '../../components/booking/ConfirmStep';
+import UserInfoStep from '../../components/booking/UserInfoStep';
 import AddCarModal from '../../components/cars/AddCarModal';
 
 // Define the steps in the booking flow
 const STEPS = [
   'SELECT_CAR',
   'DESCRIBE_ISSUE',
+  'USER_INFO',
   'SELECT_DATE',
-  'PAYMENT',
   'CONFIRM',
 ] as const;
 
@@ -35,6 +35,31 @@ const BookingFlow = () => {
   const [selectedCar, setSelectedCar] = useState<Car | null>(preselectedCar || null);
   const [issueDescription, setIssueDescription] = useState('');
   const [preferredDate, setPreferredDate] = useState<Date | null>(null);
+  const [userInfo, setUserInfo] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    streetAddress: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    vehicleMileage: string;
+    serviceHistoryNotes: string;
+    smsOptIn: boolean;
+  }>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    vehicleMileage: '',
+    serviceHistoryNotes: '',
+    smsOptIn: true,
+  });
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   
   // Ensure auth token is set before fetching data
@@ -97,6 +122,17 @@ const BookingFlow = () => {
       carId: selectedCar.id,
       issueDesc: issueDescription,
       preferredDate: preferredDate.toISOString(),
+      phoneNumber: userInfo.phoneNumber,
+      email: userInfo.email,
+      firstName: userInfo.firstName,
+      lastName: userInfo.lastName,
+      streetAddress: userInfo.streetAddress,
+      city: userInfo.city,
+      state: userInfo.state,
+      zipCode: userInfo.zipCode,
+      smsOptIn: userInfo.smsOptIn,
+      vehicleMileage: userInfo.vehicleMileage ? parseInt(userInfo.vehicleMileage, 10) : undefined,
+      serviceHistoryNotes: userInfo.serviceHistoryNotes || undefined,
     };
 
     createBookingMutation.mutate(bookingData);
@@ -110,6 +146,12 @@ const BookingFlow = () => {
     await getCars();
   };
 
+  // Handle user info submission
+  const handleUserInfoSubmit = (data: any) => {
+    setUserInfo(data);
+    goToNextStep();
+  };
+
   // Render current step
   const renderStep = () => {
     switch (currentStep) {
@@ -120,8 +162,8 @@ const BookingFlow = () => {
             selectedCar={selectedCar}
             onSelectCar={setSelectedCar}
             onAddCar={() => setIsAddCarModalOpen(true)}
-            onNext={goToNextStep}
             isLoading={carsLoading}
+            onNext={goToNextStep}
           />
         );
       case 'DESCRIBE_ISSUE':
@@ -133,6 +175,14 @@ const BookingFlow = () => {
             onBack={goToPreviousStep}
           />
         );
+      case 'USER_INFO':
+        return (
+          <UserInfoStep
+            initialData={userInfo}
+            onBack={goToPreviousStep}
+            onSubmit={handleUserInfoSubmit}
+          />
+        );
       case 'SELECT_DATE':
         return (
           <SelectDateStep
@@ -142,22 +192,16 @@ const BookingFlow = () => {
             onBack={goToPreviousStep}
           />
         );
-      case 'PAYMENT':
-        return (
-          <PaymentStep
-            onNext={goToNextStep}
-            onBack={goToPreviousStep}
-          />
-        );
       case 'CONFIRM':
         return (
           <ConfirmStep
-            car={selectedCar}
+            car={selectedCar!}
             issueDescription={issueDescription}
-            preferredDate={preferredDate}
-            onSubmit={handleSubmit}
+            preferredDate={preferredDate!}
+            userInfo={userInfo}
             onBack={goToPreviousStep}
-            isLoading={createBookingMutation.isLoading}
+            onSubmit={handleSubmit}
+            isSubmitting={createBookingMutation.isLoading}
           />
         );
       default:

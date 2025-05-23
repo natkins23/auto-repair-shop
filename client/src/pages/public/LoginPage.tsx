@@ -11,7 +11,7 @@ const LoginPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (currentUser) {
-      navigate('/garage');
+      navigate('/booking');
     }
   }, [currentUser, navigate]);
 
@@ -20,8 +20,11 @@ const LoginPage = () => {
     try {
       const user = await signInWithGoogle();
       if (user) {
-        // Explicitly navigate to the garage page after successful login
-        navigate('/garage');
+        console.log('User authenticated, navigating to booking page');
+        // Add a small delay to ensure state updates have propagated
+        setTimeout(() => {
+          navigate('/booking', { replace: true });
+        }, 100);
       }
     } catch (error) {
       console.error('Login error:', error);

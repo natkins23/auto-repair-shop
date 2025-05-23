@@ -1,10 +1,16 @@
 import { Navigate } from 'react-router-dom';
-import { ReactNode } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { ReactNode, useEffect, useState } from 'react';
 
 interface AdminRouteProps {
   children: ReactNode;
   redirectTo?: string;
+}
+
+interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  isAdmin: boolean;
 }
 
 /**
@@ -14,7 +20,25 @@ const AdminRoute = ({
   children, 
   redirectTo = '/admin/login' 
 }: AdminRouteProps) => {
-  const { currentUser, loading } = useAuth();
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check localStorage for admin user
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser) as AdminUser;
+        setCurrentUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user from localStorage:', error);
+        setCurrentUser(null);
+      }
+    } else {
+      setCurrentUser(null);
+    }
+    setLoading(false);
+  }, []);
 
   if (loading) {
     return (

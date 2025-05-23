@@ -29,6 +29,98 @@ A full-stack application for an auto repair shop with a customer-facing booking 
 
 ```
 auto_ws/
+├── client/              # React frontend
+│   ├── src/            # Source code
+│   │   ├── components/ # UI components
+│   │   ├── contexts/   # React contexts
+│   │   ├── hooks/      # Custom hooks
+│   │   ├── layouts/    # Page layouts
+│   │   ├── pages/      # Page components
+│   │   └── services/   # API services
+│   ├── public/         # Static assets
+│   └── dist/           # Build output
+└── server/             # Express backend
+    ├── src/            # Source code
+    │   ├── middleware/ # Express middleware
+    │   ├── routes/     # API routes
+    │   └── services/   # Business logic
+    ├── prisma/         # Database schema
+    └── dev-server.js   # Development server
+```
+
+## Deployment Instructions
+
+### Frontend Deployment (Netlify)
+
+1. Build the client application:
+   ```bash
+   cd client
+   npm run build
+   ```
+
+2. Deploy to Netlify using one of these methods:
+
+   **Option 1: Netlify CLI**
+   ```bash
+   # Install Netlify CLI if not already installed
+   npm install -g netlify-cli
+   
+   # Login to Netlify
+   netlify login
+   
+   # Deploy the site
+   netlify deploy --prod
+   ```
+
+   **Option 2: Netlify UI**
+   - Go to [Netlify](https://app.netlify.com/)
+   - Drag and drop the `client/dist` folder
+   - Configure site settings
+
+   **Option 3: Connect to GitHub**
+   - Push your code to GitHub
+   - Connect your repository to Netlify
+   - Configure build settings:
+     - Build command: `npm run build`
+     - Publish directory: `dist`
+
+### Backend Deployment (Heroku/Render)
+
+1. Create a new application on Heroku or Render
+
+2. **For Heroku:**
+   ```bash
+   # Install Heroku CLI if not already installed
+   npm install -g heroku
+   
+   # Login to Heroku
+   heroku login
+   
+   # Create a new Heroku app
+   heroku create auto-repair-api
+   
+   # Add the remote to your git repository
+   cd server
+   git init
+   heroku git:remote -a auto-repair-api
+   
+   # Push to Heroku
+   git add .
+   git commit -m "Initial deployment"
+   git push heroku main
+   ```
+
+3. **For Render:**
+   - Go to [Render](https://render.com/)
+   - Create a new Web Service
+   - Connect your GitHub repository
+   - Configure build settings:
+     - Build command: `npm install`
+     - Start command: `npm run start-dev-server`
+
+4. Update the frontend API configuration in `client/netlify.toml` to point to your deployed backend URL
+
+## Local Development
 ├── client/                 # Frontend React application
 │   ├── src/
 │   │   ├── components/     # Reusable UI components

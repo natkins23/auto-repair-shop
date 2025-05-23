@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { CheckCircleIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, CalendarIcon, PhoneIcon, ClipboardIcon } from '@heroicons/react/24/outline';
 import { getBookingById, Booking } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -155,6 +155,42 @@ const BookingConfirmationPage = () => {
                 <dt className="text-sm font-medium text-gray-500">Payment Method</dt>
                 <dd className="mt-1 text-sm text-gray-900">Pay at Shop</dd>
               </div>
+              
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                  <PhoneIcon className="h-5 w-5 text-gray-400 mr-2" />
+                  Contact Phone Number
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {booking.phoneNumber || 'Not provided'}
+                </dd>
+              </div>
+              
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                  <ClipboardIcon className="h-5 w-5 text-gray-400 mr-2" />
+                  Booking Reference
+                </dt>
+                <dd className="mt-1">
+                  <div className="flex items-center">
+                    <span className="font-mono text-lg font-medium bg-gray-100 px-3 py-1 rounded">
+                      {booking.referenceNumber || booking.id}
+                    </span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(booking.referenceNumber || booking.id);
+                        alert('Reference number copied to clipboard!');
+                      }}
+                      className="ml-2 text-sm text-primary hover:text-primary-dark focus:outline-none"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Save this reference number to check your repair status later.
+                  </p>
+                </dd>
+              </div>
             </dl>
           </div>
         </div>
@@ -170,9 +206,10 @@ const BookingConfirmationPage = () => {
               <h3 className="text-sm font-medium text-blue-800">What happens next?</h3>
               <div className="mt-2 text-sm text-blue-700">
                 <ul className="list-disc pl-5 space-y-1">
-                  <li>You'll receive a confirmation SMS with your booking details.</li>
+                  <li>You'll receive a confirmation SMS at {booking.phoneNumber || 'your provided number'} with your booking details.</li>
                   <li>Our team will review your issue before your appointment.</li>
-                  <li>We may contact you if we need additional information.</li>
+                  <li>We'll send you status updates via SMS as your repair progresses.</li>
+                  <li>You can check your repair status anytime using your booking reference number.</li>
                   <li>Please arrive 10 minutes before your scheduled time.</li>
                 </ul>
               </div>
@@ -182,10 +219,10 @@ const BookingConfirmationPage = () => {
 
         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
           <Link
-            to="/dashboard"
+            to="/garage"
             className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
-            View My Bookings
+            Return to Garage
           </Link>
           <Link
             to="/"
