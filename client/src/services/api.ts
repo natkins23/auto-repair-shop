@@ -8,13 +8,17 @@ const useMockData = false; // Set to false to use the deployed backend
 
 // Determine the base URL based on environment
 const getBaseUrl = () => {
+  // Allow overriding the API URL via environment variable
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
   // In development, use the local server
-  if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+  if (import.meta.env.DEV) {
     return 'http://localhost:3001/api';
   }
   
   // In production, use the deployed Render backend
-  // Replace this URL with your actual Render backend URL once deployed
   return 'https://auto-repair-shop-server.onrender.com/api';
 };
 
@@ -24,11 +28,32 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for sending cookies with cross-origin requests
 });
+
+// Log the API configuration
+console.log('API Base URL:', getBaseUrl());
+console.log('Environment:', import.meta.env.MODE);
+
+// Add request interceptor to log requests
+api.interceptors.request.use(
+  config => {
+    console.log(`[${config.method?.toUpperCase()}] ${config.baseURL}${config.url}`);
+    console.log('Request headers:', config.headers);
+    return config;
+  },
+  error => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
 
 // Add response interceptor to handle errors gracefully
 api.interceptors.response.use(
-  response => response,
+  response => {
+    console.log(`[${response.status}] ${response.config.url}`, response.data);
+    return response;
+  },
   error => {
     console.error('API Error:', error);
     // If we're using mock data, we'll handle the error in the specific API functions
