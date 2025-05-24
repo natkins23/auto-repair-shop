@@ -7,11 +7,22 @@ const { sendSMS } = require('../services/twilio');
 
 // Validation schema for booking creation
 const createBookingSchema = z.object({
-  carId: z.number().int().positive(),
+  carId: z.string().min(1, "Car ID is required"),
   issueDesc: z.string().min(5, "Issue description is required (min 5 characters)"),
   preferredDate: z.string().refine(val => !isNaN(Date.parse(val)), {
     message: "Invalid date format"
-  })
+  }),
+  phoneNumber: z.string().min(1, "Phone number is required"),
+  email: z.string().email("Invalid email address"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  streetAddress: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  smsOptIn: z.boolean().optional().default(false),
+  vehicleMileage: z.number().int().nonnegative().optional(),
+  serviceHistoryNotes: z.string().optional()
 });
 
 // Validation schema for booking updates
@@ -179,25 +190,46 @@ router.post('/', authMiddleware, async (req, res) => {
     // Generate a unique reference number
     const ref = generateBookingReference();
     
-    // Create the booking
+    // Create the booking with additional user information
     const booking = await req.prisma.booking.create({
       data: {
         ref,
-        carId: bookingData.carId,
+        carId: parseInt(bookingData.carId, 10),
         userId: req.user.id,
         issueDesc: bookingData.issueDesc,
         preferredDate: new Date(bookingData.preferredDate),
-        status: 'PENDING'
+        status: 'PENDING',
+        phoneNumber: bookingData.phoneNumber,
+        email: bookingData.email,
+        firstName: bookingData.firstName,
+        lastName: bookingData.lastName,
+        streetAddress: bookingData.streetAddress,
+        city: bookingData.city,
+        state: bookingData.state,
+        zipCode: bookingData.zipCode,
+        smsOptIn: bookingData.smsOptIn || false,
+        vehicleMileage: bookingData.vehicleMileage,
+        serviceHistoryNotes: bookingData.serviceHistoryNotes
       },
       include: {
-        car: true
+        car: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
       }
     });
     
     res.status(201).json(booking);
   } catch (error) {
     console.error('Error creating booking:', error);
-    res.status(500).json({ error: 'Failed to create booking' });
+    res.status(500).json({ 
+      error: 'Failed to create booking',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

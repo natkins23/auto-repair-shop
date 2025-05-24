@@ -26,9 +26,11 @@ if (isNaN(PORT)) {
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:5174',
   'https://auto-repair-shop.windsurf.build',
   'https://auto-repair-shop.onrender.com',
-  'https://auto-repair-shop-server.onrender.com'
+  'https://auto-repair-shop-server.onrender.com',
+  'https://auto-repair-shop-client.onrender.com'
 ];
 
 // Log all incoming requests

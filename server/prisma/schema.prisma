@@ -36,19 +36,30 @@ model Car {
 }
 
 model Booking {
-  id            Int      @id @default(autoincrement())
-  ref           String   @unique
-  carId         Int
-  userId        String
-  issueDesc     String
-  preferredDate DateTime
-  status        String   @default("PENDING")
-  etaDate       DateTime?
-  amount        Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  car           Car      @relation(fields: [carId], references: [id])
-  user          User     @relation(fields: [userId], references: [id])
+  id                 Int      @id @default(autoincrement())
+  ref               String   @unique
+  carId             Int
+  userId            String
+  issueDesc         String
+  preferredDate     DateTime
+  status            String   @default("PENDING")
+  etaDate           DateTime?
+  amount            Int?
+  phoneNumber      String
+  email            String
+  firstName        String
+  lastName         String
+  streetAddress    String?
+  city             String?
+  state            String?
+  zipCode          String?
+  smsOptIn         Boolean  @default(false)
+  vehicleMileage   Int?
+  serviceHistoryNotes String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  car              Car      @relation(fields: [carId], references: [id])
+  user             User     @relation(fields: [userId], references: [id])
 }
 
 // Removed the enum definition
